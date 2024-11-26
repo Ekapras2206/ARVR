@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 8 A-Frame VR</title>
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script>
+        AFRAME.registerComponent('texture-loader', {
+            schema: {
+                src: {},
+                material_tex: {},
+                mesh: {},
+                texture: {},
+                normal: {type: "boolean"},
+                normal_src: {},
+                wrap: {type: "boolean", default: false},
+                repeat: {type: "boolean", default: false}
+            },
+            init: function () {
+                console.log('initialized');
+            },
+            update: function () {
+                this.data.texture = new THREE.TextureLoader().load(this.data.src);
+
+                this.data.texture.anisotropy = 16;
+                this.data.texture.minFilter = THREE.NearestFilter;
+                this.data.texture.maxFilter = THREE.NearestFilter;
+                this.data.material_tex = new THREE.MeshLambertMaterial({ map: this.data.texture });
+                const el = this.el;
+                this.data.mesh = el.getObject3D('mesh');
+                this.data.mesh.material = this.data.material_tex;
+
+                if (this.data.normal == true) {
+                    console.log('normal true');
+                    this.data.normal_map = new THREE.TextureLoader().load(this.data.normal_src);
+                    this.data.mesh.material.normalMap = this.data.normal_map;
+                    this.data.mesh.receiveShadow = true;
+                }
+                if (this.data.wrap === true && this.data.repeat === true) {
+                    this.data.texture.wrapS = this.data.texture.wrapT = THREE.RepeatWrapping;
+                    this.data.texture.repeat.set(25, 25);
+                }
+            }
+        });
+
+        // Fungsi untuk menggerakkan kamera
+        function moveCamera(direction) {
+            const cameraEl = document.querySelector('[camera]');
+            const position = cameraEl.getAttribute('position');
+
+            switch (direction) {
+                case 'forward':
+                    position.z -= 1;
+                    break;
+                case 'backward':
+                    position.z += 1;
+                    break;
+                case 'left':
+                    position.x -= 1;
+                    break;
+                case 'right':
+                    position.x += 1;
+                    break;
+                case 'up':
+                    position.y += 1;
+                    break;
+                case 'down':
+                    position.y -= 1;
+                    break;
+            }
+            cameraEl.setAttribute('position', position);
+        }
+    </script>
+</head>
+<body>
+    <a-scene fog="type: exponential; density: 0.1; color: #cce0ff">
+        <!-- Tambahkan UI Mode VR -->
+        <a-vr-mode-ui></a-vr-mode-ui>
+        
+        <!-- Cahaya -->
+        <a-entity id="dir-light" light="type: directional; color: #dfebff; intensity: 1" position="50 200 100"></a-entity>
+        <a-entity light="type: ambient; color: #666666"></a-entity>
+        
+        <!-- Kamera dengan kontrol VR -->
+        <a-camera wasd-controls look-controls position="0 1.6 5"></a-camera>
+        
+        <!-- Tanah -->
+        <a-plane id="ground" 
+                 texture-loader="src: texture/grass.jpg; normal: true; wrap: true; repeat: true"
+                 height="50" width="50" 
+                 rotation="-90 0 0"
+        ></a-plane>
+        
+        <!-- Kotak dengan tekstur -->
+        <a-box texture-loader="src: texture/Brick.jpg"
+               position="0.3 1.5 -0.5"
+               depth="0.5" height="0.5" width="0.5"
+        ></a-box>
+        
+        <!-- Langit -->
+        <a-sky color="#87CEEB"></a-sky>
+    </a-scene>
+
+    <!-- Tombol untuk menggerakkan kamera -->
+    <div style="position: fixed; bottom: 20px; left: 20px;">
+        <button onclick="moveCamera('forward')">Forward</button>
+        <button onclick="moveCamera('backward')">Backward</button>
+        <button onclick="moveCamera('left')">Left</button>
+        <button onclick="moveCamera('right')">Right</button>
+        <button onclick="moveCamera('up')">Up</button>
+        <button onclick="moveCamera('down')">Down</button>
+    </div>
+</body>
+</html>
